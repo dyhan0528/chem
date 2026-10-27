@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>한도윤 화학정복하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* layout: single column workbook — dashboard on top, units as collapsible chapters of lecture rows */
+:root{
+  --bg:#f7f5f2; --surface:#ffffff; --ink:#1f1b17; --muted:#6f665e; --line:#e6e0d9;
+  --accent:#e2611d; --accent-soft:#fbe7db; --good:#2f8a57; --good-soft:#e0f1e7;
+  --display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans KR",system-ui,-apple-system,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171412; --surface:#211d1a; --ink:#f1ebe5; --muted:#a69b91; --line:#352f2a;
+  --accent:#f2843f; --accent-soft:#3b261a; --good:#5cc489; --good-soft:#1b3326; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171412; --surface:#211d1a; --ink:#f1ebe5; --muted:#a69b91; --line:#352f2a;
+  --accent:#f2843f; --accent-soft:#3b261a; --good:#5cc489; --good-soft:#1b3326; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:760px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(28px,6vw,40px);margin:0;letter-spacing:.01em;text-wrap:balance}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);margin:4px 0 0;font-size:13px}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* gate */
+.gate{min-height:70vh;display:grid;place-items:center}
+.gate form{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 24px;width:min(340px,100%);display:grid;gap:12px;text-align:center}
+.gate input{font:inherit;font-size:18px;text-align:center;letter-spacing:.3em;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+.gate .err{color:var(--accent);font-size:13px;min-height:1.2em;margin:0}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 14px;font-weight:700}
+
+/* dashboard */
+.dash{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:22px 0 10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.stat b{display:block;font-family:var(--mono);font-size:22px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px}
+.stat.main b{color:var(--accent)}
+@media (max-width:560px){.dash{grid-template-columns:repeat(2,1fr)}}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:18px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .4s}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:var(--muted)}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:5px 10px;font-size:13px}
+
+/* units */
+.unit{margin-top:22px}
+.unit>h2{font-family:var(--display);font-weight:400;font-size:20px;margin:0 0 8px;display:flex;gap:10px;align-items:baseline}
+.unit>h2 .roman{color:var(--accent);font-family:var(--mono);font-size:15px}
+.ch{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.ch-head{width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;background:none;border:0;color:var(--ink);text-align:left}
+.ch-head .no{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:22px}
+.ch-head .t{flex:1;font-weight:700;min-width:0}
+.ch-head .cnt{font-family:var(--mono);font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ch-head .chev{transition:transform .2s;color:var(--muted)}
+.ch.closed .chev{transform:rotate(-90deg)}
+.ch.closed .rows{display:none}
+.ch.done .ch-head .cnt{color:var(--good);font-weight:700}
+.row{display:grid;grid-template-columns:28px 1fr auto;gap:4px 10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.row.on{background:var(--good-soft)}
+.row input[type=checkbox]{width:20px;height:20px;accent-color:var(--good);margin:0}
+.info{min-width:0}
+.info .name{font-weight:500}
+.row.on .name{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--good)}
+.meta{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.tag{background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:0 6px;font-weight:700}
+.fields{display:flex;gap:6px;align-items:center}
+.fields input{font:inherit;font-size:13px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);padding:4px 6px}
+.fields input[type=date]{width:132px}
+.fields input.score{width:58px;text-align:right;font-family:var(--mono)}
+@media (max-width:560px){.fields{grid-column:2 / 4}}
+.foot{margin-top:28px;font-size:12px;color:var(--muted);text-align:center;display:grid;gap:8px;justify-items:center}
+.confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+.danger{color:var(--accent);border-color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section class="gate" id="gate">
+    <form id="gateForm" autocomplete="off">
+      <h1>한도윤 <span>화학</span>정복하기</h1>
+      <p class="sub" style="margin:0">비밀번호를 입력하세요</p>
+      <input id="pw" type="password" inputmode="numeric" aria-label="비밀번호">
+      <p class="err" id="pwErr"></p>
+      <button class="btn" type="submit">들어가기</button>
+    </form>
+  </section>
+
+  <main id="app" hidden>
+    <h1>한도윤 <span>화학</span>정복하기</h1>
+    <p class="sub">장풍 선생님 · 풀리는 화학 · 31강 + 추가 강의</p>
+
+    <div class="dash">
+      <div class="stat main"><b id="sPct">0%</b><small>전체 진도</small></div>
+      <div class="stat"><b id="sLec">0 / 32</b><small>완료 강의</small></div>
+      <div class="stat"><b id="sCh">0 / 12</b><small>완료 단원</small></div>
+      <div class="stat"><b id="sTime">—</b><small>수강 시간</small></div>
+    </div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="toolbar">
+      <button class="ghost" id="toggleAll" type="button">전체 접기</button>
+      <span id="status">연결 중…</span>
+    </div>
+    <div id="units"></div>
+
+    <div class="foot">
+      <span>진도는 클라우드에 저장돼요 · 어느 기기에서 열어도 같은 기록을 봅니다.</span>
+      <button class="ghost" id="resetBtn" type="button">기록 초기화</button>
+      <div class="confirm" id="confirmBox" hidden>
+        <span>모든 체크와 점수를 지울까요?</span>
+        <button class="ghost danger" id="resetYes" type="button">지우기</button>
+        <button class="ghost" id="resetNo" type="button">취소</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const PASSWORD = "1234";
+const UNITS = [
+  {roman:"+", title:"추가 강의", chapters:[
+    {no:"+", title:"화학 뽀개기", lec:[["X","화학 뽀개기",17,"-"]]}]},
+  {roman:"Ⅰ", title:"물질의 상태 변화", chapters:[
+    {no:"01", title:"물질의 상태 변화", lec:[[1,"물질의 세 가지 상태와 상태 변화",36,"8-9"],[2,"01. 물질의 상태 변화 - 탐구, 문제",19,"10-13"]]},
+    {no:"02", title:"상태 변화와 열에너지", lec:[[3,"상태 변화와 열에너지",29,"14-15"],[4,"02. 상태 변화와 열에너지 - 탐구, 문제",17,"16-19"]]}]},
+  {roman:"Ⅱ", title:"기체의 성질", chapters:[
+    {no:"03", title:"입자의 운동", lec:[[5,"입자의 운동, 확산, 증발",21,"24-25"],[6,"03. 입자의 운동 - 탐구, 문제",17,"26-29"]]},
+    {no:"04", title:"기체의 부피 변화", lec:[[7,"기체의 압력, 보일 법칙",31,"30-31"],[8,"샤를 법칙",19,"32"],[9,"04. 기체의 부피 변화 - 탐구, 문제",23,"33-37"]]}]},
+  {roman:"Ⅲ", title:"물질의 특성", chapters:[
+    {no:"05", title:"물질의 특성", lec:[[10,"순물질과 혼합물, 밀도",31,"42-43"],[11,"용해도",28,"44-45"],[12,"녹는점, 어는점, 끓는점",22,"45-46"],[13,"05. 물질의 특성 - 탐구, 문제",29,"47-52"]]},
+    {no:"06", title:"혼합물의 분리", lec:[[14,"끓는점 차, 밀도 차를 이용한 혼합물의 분리",27,"53-55"],[15,"재결정, 크로마토그래피를 이용한 혼합물의 분리",23,"55-56"],[16,"06. 혼합물의 분리 - 탐구, 문제",23,"57-61"]]}]},
+  {roman:"Ⅳ", title:"물질의 구성", chapters:[
+    {no:"07", title:"물질의 기본 구성", lec:[[17,"원소, 원소의 확인",30,"66-67"],[18,"07. 물질의 기본 구성 - 탐구, 문제",19,"68-71"]]},
+    {no:"08", title:"물질을 구성하는 입자", lec:[[19,"원자, 분자",29,"72-73"],[20,"원소와 분자의 표현",23,"74"],[21,"08. 물질을 구성하는 입자 - 탐구, 문제",18,"75-77"]]},
+    {no:"09", title:"이온의 형성", lec:[[22,"이온, 앙금 생성 반응",41,"78-79"],[23,"09. 이온의 형성 - 탐구, 문제",27,"80-83"]]}]},
+  {roman:"Ⅴ", title:"화학 반응의 규칙과 에너지 변화", chapters:[
+    {no:"10", title:"물질 변화와 화학 반응식", lec:[[24,"물리 변화와 화학 변화",20,"88-89"],[25,"화학 반응과 화학 반응식",23,"89-90"],[26,"10. 물질 변화와 화학 반응식 - 탐구, 자료, 문제",28,"91-94"]]},
+    {no:"11", title:"화학 반응의 규칙", lec:[[27,"질량 보존 법칙, 일정 성분비 법칙",31,"95-97"],[28,"기체 반응 법칙",17,"98"],[29,"11. 화학 반응의 규칙 - 탐구, 문제",23,"99-103"]]},
+    {no:"12", title:"화학 반응에서의 에너지 출입", lec:[[30,"에너지를 방출하는 반응, 흡수하는 반응",17,"104-105"],[31,"12. 화학 반응에서의 에너지 출입 - 탐구, 문제",15,"106-109"]]}]},
+];
+const ALL = []; UNITS.forEach(u=>u.chapters.forEach(c=>c.lec.forEach(l=>ALL.push({id:"L"+(l[0]==="X"?"00":String(l[0]).padStart(2,"0")), n:l[0], name:l[1], min:l[2], page:l[3], ch:c}))));
+const TOTAL_MIN = ALL.reduce((a,l)=>a+l.min,0);
+const fmt = m => { const h=Math.floor(m/60), r=m%60; return h? `${h}시간 ${r}분` : `${r}분`; };
+let state = {};          // id -> {done, date, score}
+
+function today(){ const d=new Date(); const z=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`; }
+
+function build(){
+  const root = document.getElementById("units");
+  let closed = {}; try{ closed = JSON.parse(localStorage.getItem("chemClosed")||"{}"); }catch(e){}
+  root.innerHTML = "";
+  UNITS.forEach(u=>{
+    const sec = document.createElement("section"); sec.className="unit";
+    sec.innerHTML = `<h2><span class="roman">${u.roman}</span>${u.title}</h2>`;
+    u.chapters.forEach(c=>{
+      const box = document.createElement("div"); box.className="ch"+(closed[c.no]?" closed":""); box.dataset.no=c.no;
+      const total = c.lec.reduce((a,l)=>a+l[2],0);
+      box.innerHTML = `<button class="ch-head" type="button" aria-expanded="${!closed[c.no]}"><span class="no">${c.no}</span><span class="t">${c.title}</span><span class="cnt"></span><span class="chev">▾</span></button><div class="rows"></div>`;
+      box.querySelector(".ch-head").title = `총 ${fmt(total)}`;
+      const rows = box.querySelector(".rows");
+      ALL.filter(l=>l.ch===c).forEach(l=>{
+        const r = document.createElement("div"); r.className="row"; r.dataset.id=l.id;
+        const quiz = /탐구/.test(l.name);
+        r.innerHTML = `<input type="checkbox" id="c_${l.id}" aria-label="${l.name} 완료">
+          <label class="info" for="c_${l.id}"><div class="name">${l.n==="X"?"추가":l.n+"강"} · ${l.name.replace(/^\d+\. /,"")}</div>
+          <div class="meta"><span>${l.min}분</span>${l.page!=="-"?`<span>p.${l.page}</span>`:""}${quiz?'<span class="tag">탐구·문제</span>':""}</div></label>
+          <div class="fields"><input type="date" id="d_${l.id}" aria-label="수강일"><input class="score" id="s_${l.id}" inputmode="numeric" placeholder="누테" aria-label="누테 점수"></div>`;
+        rows.appendChild(r);
+        r.querySelector("input[type=checkbox]").addEventListener("change", e=>{
+          const on = e.target.checked; const cur = state[l.id]||{};
+          save(l.id, {done:on, date: on ? (cur.date || today()) : (cur.date||""), score: cur.score||""});
+        });
+        r.querySelector("input[type=date]").addEventListener("change", e=>{ const cur=state[l.id]||{}; save(l.id,{done:!!cur.done,date:e.target.value,score:cur.score||""}); });
+        r.querySelector(".score").addEventListener("change", e=>{ const cur=state[l.id]||{}; save(l.id,{done:!!cur.done,date:cur.date||"",score:e.target.value.trim()}); });
+      });
+      box.querySelector(".ch-head").addEventListener("click", ()=>{ box.classList.toggle("closed"); box.querySelector(".ch-head").setAttribute("aria-expanded", !box.classList.contains("closed")); rememberClosed(); syncToggle(); });
+      sec.appendChild(box);
+    });
+    root.appendChild(sec);
+  });
+  syncToggle();
+}
+function rememberClosed(){ const o={}; document.querySelectorAll(".ch.closed").forEach(b=>o[b.dataset.no]=1); try{ localStorage.setItem("chemClosed",JSON.stringify(o)); }catch(e){} }
+function syncToggle(){ const anyOpen = document.querySelector(".ch:not(.closed)"); document.getElementById("toggleAll").textContent = anyOpen?"전체 접기":"전체 펼치기"; }
+document.getElementById("toggleAll").addEventListener("click", ()=>{
+  const anyOpen = !!document.querySelector(".ch:not(.closed)");
+  document.querySelectorAll(".ch").forEach(b=>{ b.classList.toggle("closed", anyOpen); b.querySelector(".ch-head").setAttribute("aria-expanded", !anyOpen); });
+  rememberClosed(); syncToggle();
+});
+
+function render(){
+  let doneN=0, doneMin=0;
+  ALL.forEach(l=>{
+    const s = state[l.id]||{}; const r = document.querySelector(`.row[data-id="${l.id}"]`); if(!r) return;
+    r.classList.toggle("on", !!s.done);
+    r.querySelector("input[type=checkbox]").checked = !!s.done;
+    const d = r.querySelector("input[type=date]"); if(document.activeElement!==d) d.value = s.date||"";
+    const sc = r.querySelector(".score"); if(document.activeElement!==sc) sc.value = s.score||"";
+    if(s.done){ doneN++; doneMin+=l.min; }
+  });
+  let chDone=0, chTotal=0;
+  document.querySelectorAll(".ch").forEach(b=>{
+    const lecs = ALL.filter(l=>l.ch.no===b.dataset.no); const n = lecs.filter(l=>(state[l.id]||{}).done).length;
+    b.querySelector(".cnt").textContent = `${n}/${lecs.length}`;
+    b.classList.toggle("done", n===lecs.length);
+    if(b.dataset.no!=="+"){ chTotal++; if(n===lecs.length) chDone++; }
+  });
+  const pct = Math.round(doneMin/TOTAL_MIN*100);
+  document.getElementById("sPct").textContent = pct+"%";
+  document.getElementById("bar").style.width = pct+"%";
+  document.getElementById("sLec").textContent = `${doneN} / ${ALL.length}`;
+  document.getElementById("sCh").textContent = `${chDone} / ${chTotal}`;
+  document.getElementById("sTime").textContent = doneMin ? `${fmt(doneMin)}` : `0 / ${fmt(TOTAL_MIN)}`;
+  document.getElementById("sTime").title = `전체 ${fmt(TOTAL_MIN)}`;
+}
+
+// ---- 저장: Vercel 서버(/api/progress) → 안 되면 이 기기에만 저장 ----
+let pass = "";
+let cloud = false;            // 서버 저장이 되는지
+const LOCAL_KEY = "chemProgress";
+function setStatus(t){ document.getElementById("status").textContent = t; }
+function loadLocal(){ try{ return JSON.parse(localStorage.getItem(LOCAL_KEY)||"{}"); }catch(e){ return {}; } }
+function saveLocal(){ try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }catch(e){} }
+
+async function api(method, body){
+  const res = await fetch("/api/progress", {
+    method, headers: {"content-type":"application/json","x-pass": pass},
+    body: body ? JSON.stringify(body) : undefined, cache: "no-store"
+  });
+  return res;
+}
+
+async function pull(){
+  try{
+    const res = await api("GET");
+    if(res.status === 401) return "badpass";
+    if(!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    state = data.progress || {}; cloud = true; saveLocal(); render();
+    setStatus("클라우드 연결됨");
+    return "ok";
+  }catch(e){
+    cloud = false; state = loadLocal(); render();
+    setStatus("클라우드 연결 안 됨 · 이 기기에만 저장돼요");
+    return "offline";
+  }
+}
+
+async function save(id, val){
+  state[id] = val; render(); saveLocal();
+  if(!cloud){ setStatus("이 기기에만 저장됨"); return; }
+  try{
+    const res = await api("POST", {id, value: val});
+    if(!res.ok) throw new Error(res.status);
+    setStatus("저장됨");
+  }catch(e){ setStatus("저장 실패 · 인터넷 연결을 확인해 주세요"); }
+}
+
+// 다른 기기에서 바꾼 기록 가져오기 (20초마다, 화면을 볼 때만)
+setInterval(()=>{ if(cloud && !document.hidden && !document.getElementById("app").hidden && !document.activeElement.matches("input")) pull(); }, 20000);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && cloud) pull(); });
+
+// reset
+const rb=document.getElementById("resetBtn"), cb=document.getElementById("confirmBox");
+rb.addEventListener("click",()=>{ cb.hidden=false; rb.hidden=true; });
+document.getElementById("resetNo").addEventListener("click",()=>{ cb.hidden=true; rb.hidden=false; });
+document.getElementById("resetYes").addEventListener("click", async ()=>{
+  cb.hidden=true; rb.hidden=false;
+  state = {}; render(); saveLocal();
+  if(cloud){
+    try{ const res = await api("DELETE"); if(!res.ok) throw 0; setStatus("기록을 지웠어요"); }
+    catch(e){ setStatus("초기화 실패 · 다시 시도해 주세요"); }
+  } else setStatus("기록을 지웠어요");
+});
+
+// gate
+function enter(){ document.getElementById("gate").hidden=true; document.getElementById("app").hidden=false; }
+async function tryEnter(p, fromSaved){
+  pass = p;
+  const r = await pull();
+  if(r === "badpass"){
+    try{ localStorage.removeItem("chemPass"); }catch(e){}
+    if(!fromSaved) document.getElementById("pwErr").textContent="비밀번호가 맞지 않아요";
+    return;
+  }
+  if(r === "offline" && p !== PASSWORD){
+    if(!fromSaved) document.getElementById("pwErr").textContent="비밀번호가 맞지 않아요";
+    return;
+  }
+  try{ localStorage.setItem("chemPass", p); }catch(e){}
+  enter();
+}
+document.getElementById("gateForm").addEventListener("submit", e=>{
+  e.preventDefault();
+  document.getElementById("pwErr").textContent="";
+  tryEnter(document.getElementById("pw").value.trim(), false);
+});
+
+build(); render();
+try{ const saved = localStorage.getItem("chemPass"); if(saved) tryEnter(saved, true); }catch(e){}
+</script>
+
+</body>
+</html>
+// 화학정복하기 진도 저장 API (Vercel 서버리스 함수)
+// 저장소: Upstash Redis (Vercel Storage에서 연결하면 환경 변수가 자동으로 들어옵니다)
+//   GET    /api/progress           → 전체 진도 읽기
+//   POST   /api/progress {id,value} → 강의 하나 저장
+//   DELETE /api/progress           → 전체 초기화
+// 모든 요청은 x-pass 헤더에 비밀번호가 있어야 합니다.
+
+const KEY = "doyoon:chem:progress";
+const PASSWORD = process.env.SITE_PASSWORD || "1234";
+const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
+async function redis(command) {
+  const res = await fetch(URL_, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify(command),
+  });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || `redis ${res.status}`);
+  return data.result;
+}
+
+function readBody(req) {
+  if (req.body && typeof req.body === "object") return Promise.resolve(req.body);
+  return new Promise((resolve) => {
+    let raw = "";
+    req.on("data", (c) => (raw += c));
+    req.on("end", () => { try { resolve(JSON.parse(raw || "{}")); } catch { resolve({}); } });
+  });
+}
+
+module.exports = async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+
+  if ((req.headers["x-pass"] || "") !== PASSWORD) {
+    return res.status(401).json({ error: "비밀번호가 맞지 않아요" });
+  }
+  if (!URL_ || !TOKEN) {
+    return res.status(503).json({ error: "저장소가 연결되지 않았어요 (Vercel → Storage에서 Upstash Redis 연결)" });
+  }
+
+  try {
+    if (req.method === "GET") {
+      const flat = (await redis(["HGETALL", KEY])) || [];
+      const progress = {};
+      for (let i = 0; i < flat.length; i += 2) {
+        try { progress[flat[i]] = JSON.parse(flat[i + 1]); } catch {}
+      }
+      return res.status(200).json({ progress });
+    }
+
+    if (req.method === "POST") {
+      const { id, value } = await readBody(req);
+      if (!/^L\d{2}$/.test(id || "") || typeof value !== "object" || value === null) {
+        return res.status(400).json({ error: "잘못된 요청이에요" });
+      }
+      const clean = {
+        done: !!value.done,
+        date: String(value.date || "").slice(0, 10),
+        score: String(value.score || "").slice(0, 10),
+      };
+      await redis(["HSET", KEY, id, JSON.stringify(clean)]);
+      return res.status(200).json({ ok: true });
+    }
+
+    if (req.method === "DELETE") {
+      await redis(["DEL", KEY]);
+      return res.status(200).json({ ok: true });
+    }
+
+    res.setHeader("Allow", "GET, POST, DELETE");
+    return res.status(405).json({ error: "지원하지 않는 요청이에요" });
+  } catch (e) {
+    return res.status(500).json({ error: "저장소 오류", detail: String(e.message || e) });
+  }
+};
+# 한도윤 화학정복하기
+
+장풍 선생님 화학(31강 + 추가 강의) 진도표. Vercel에 올려서 씁니다.
+
+## 파일
+- `index.html` — 화면 (비밀번호 화면, 진도 대시보드, 강의 체크·수강일·누테 점수)
+- `api/progress.js` — 진도를 클라우드(Upstash Redis)에 저장하는 서버 함수
+
+## 배포 순서
+1. GitHub에서 새 저장소 `doyoon-chem` 만들기 → 이 폴더의 파일을 그대로 업로드
+2. Vercel → Add New → Project → `doyoon-chem` 선택 → Deploy
+3. Vercel 프로젝트 → Storage → Upstash (Redis) 만들기 → 이 프로젝트에 연결
+4. Deployments → 최신 배포 오른쪽 ⋯ → Redeploy
+
+## 비밀번호 바꾸기 (선택)
+Vercel → Settings → Environment Variables에 `SITE_PASSWORD`를 넣고 Redeploy.
+기본값은 1234입니다. 바꿨다면 `index.html`의 `const PASSWORD = "1234";`도 같은 값으로 고치세요
+(저장소 연결이 안 됐을 때만 쓰이는 값입니다).
